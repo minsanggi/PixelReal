@@ -48,14 +48,14 @@
             cursor: pointer;
         }
         .logo span { color: var(--accent); }
-        nav { display: flex; gap: 10px; }
+        nav { display: flex; gap: 8px; flex-wrap: wrap; }
         .nav-btn {
             background: transparent;
             border: none;
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 600;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
@@ -82,6 +82,11 @@
             padding: 2px 6px;
             border-radius: 99px;
             margin-left: 4px;
+        }
+        .badge-green {
+            background-color: var(--accent-secondary);
+            color: #064e3b;
+            font-weight: 800;
         }
         .user-status {
             font-size: 0.85rem;
@@ -120,7 +125,7 @@
         .hero p { color: #c4b5fd; max-width: 600px; }
 
         /* Game Grid */
-        .section-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .section-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .game-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -177,6 +182,8 @@
         .btn:hover { background-color: var(--accent-hover); }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
         .btn-outline:hover { background: var(--bg-input); }
+        .btn-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: #fca5a5; }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
         .btn-full { width: 100%; padding: 12px; font-size: 1rem; margin-top: 10px; }
 
         /* Auth Forms (Login & Signup) */
@@ -253,7 +260,7 @@
         /* Cart Page (Calculation Page) */
         .cart-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 28px; }
         @media (max-width: 850px) { .cart-layout { grid-template-columns: 1fr; } }
-        .cart-list, .summary-box {
+        .cart-list, .summary-box, .log-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
@@ -292,6 +299,32 @@
         }
         .calc-total span:last-child { color: #a78bfa; font-size: 1.45rem; }
 
+        /* Login Logs & Registered Users Table */
+        .log-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        .table-wrap { overflow-x: auto; margin-top: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background-color: var(--bg-input); color: #c4b5fd; font-weight: 700; }
+        tr:hover td { background-color: rgba(255,255,255,0.02); }
+        .status-pill {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .status-success { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+        .status-fail { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+        .info-banner {
+            background: rgba(124, 58, 237, 0.12);
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: #ddd6fe;
+        }
+
         /* Toast Notification */
         #toast {
             position: fixed;
@@ -323,6 +356,7 @@
             <button class="nav-btn" id="nav-cart" onclick="switchTab('cart')">장바구니 <span class="badge" id="cart-badge">2</span></button>
             <button class="nav-btn" id="nav-login" onclick="switchTab('login')">로그인</button>
             <button class="nav-btn" id="nav-signup" onclick="switchTab('signup')">회원가입</button>
+            <button class="nav-btn" id="nav-logs" onclick="switchTab('logs')">회원·로그인 기록 <span class="badge badge-green" id="log-badge">0</span></button>
         </nav>
         <div class="user-status" id="user-status">
             <span id="welcome-msg"></span>
@@ -416,16 +450,17 @@
         <div class="auth-container">
             <div class="auth-header">
                 <h2>Pixel Realm 로그인</h2>
-                <p>인디 게임 라이브러리와 커뮤니티에 접속하세요</p>
+                <p>회원가입한 계정으로 로그인하고 기록을 확인하세요</p>
             </div>
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label>아이디</label>
-                    <input type="text" id="login-id" placeholder="아이디를 입력하세요" required>
+                    <input type="text" id="login-id" placeholder="가입한 아이디를 입력하세요" required>
                 </div>
                 <div class="form-group">
                     <label>비밀번호</label>
                     <input type="password" id="login-pw" placeholder="비밀번호를 입력하세요" required>
+                    <p id="login-error-msg" class="helper-text error"></p>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; margin-bottom:20px;">
                     <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--text-muted);">
@@ -453,13 +488,13 @@
         <div class="auth-container" style="max-width:540px;">
             <div class="auth-header">
                 <h2>회원가입 (Sign Up)</h2>
-                <p>맞춤형 인디 게임 추천을 위한 계정을 생성합니다</p>
+                <p>가입한 계정 정보는 브라우저 저장소(localStorage)에 등록됩니다</p>
             </div>
             <form onsubmit="handleSignup(event)">
                 <div class="form-group">
                     <label>아이디 *</label>
                     <div class="input-row">
-                        <input type="text" id="reg-id" placeholder="영문, 숫자 조합 4~12자" required>
+                        <input type="text" id="reg-id" placeholder="영문, 숫자 조합 4~12자" oninput="resetIdCheck()" required>
                         <button type="button" class="btn btn-outline" onclick="checkDuplicate('id')" style="white-space:nowrap;">중복확인</button>
                     </div>
                     <p id="id-msg" class="helper-text">사용할 아이디 입력 후 중복확인을 눌러주세요.</p>
@@ -467,7 +502,7 @@
 
                 <div class="form-group">
                     <label>비밀번호 *</label>
-                    <input type="password" id="reg-pw" placeholder="8자 이상 영문, 숫자, 특수문자 포함" oninput="validatePassword()" required>
+                    <input type="password" id="reg-pw" placeholder="4자 이상 비밀번호 입력" oninput="validatePassword()" required>
                 </div>
 
                 <div class="form-group">
@@ -479,7 +514,7 @@
                 <div class="form-group">
                     <label>닉네임 *</label>
                     <div class="input-row">
-                        <input type="text" id="reg-nick" placeholder="커뮤니티에서 사용할 닉네임" required>
+                        <input type="text" id="reg-nick" placeholder="커뮤니티에서 사용할 닉네임" oninput="resetNickCheck()" required>
                         <button type="button" class="btn btn-outline" onclick="checkDuplicate('nick')" style="white-space:nowrap;">중복확인</button>
                     </div>
                     <p id="nick-msg" class="helper-text"></p>
@@ -520,6 +555,56 @@
             </form>
         </div>
     </section>
+
+    <!-- 5. 회원 목록 및 로그인 기록 조회 페이지 -->
+    <section id="page-logs" class="page-section">
+        <div class="section-title">
+            <span>📋 가입 회원 및 로그인 기록 조회 (localStorage 연동)</span>
+            <button class="btn btn-danger" onclick="clearAllStorage()" style="font-size:0.82rem; padding:7px 14px;">기록 전체 초기화</button>
+        </div>
+
+        <div class="info-banner">
+            💡 <strong>동작 방식 안내:</strong> 별도 백엔드 서버 없이 정적 웹(GitHub Pages) 환경에서 회원 인증 흐름을 검증하기 위해 브라우저 <code>localStorage</code>에 가입 계정(<code>pixel_realm_users</code>)과 로그인 시도 이력(<code>pixel_realm_login_logs</code>)을 실시간으로 저장·조회합니다. (F12 → Application → Local Storage에서도 동일 데이터 확인 가능)
+        </div>
+
+        <div class="log-grid">
+            <div class="log-card">
+                <h3>👤 등록된 회원 계정 목록 (<span id="user-count">0</span>명)</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>아이디</th>
+                                <th>닉네임</th>
+                                <th>선호 장르</th>
+                                <th>가입 일시</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="log-card">
+                <h3>🕒 로그인 시도 및 접속 기록 (<span id="log-count">0</span>건)</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>접속 일시</th>
+                                <th>시도 아이디</th>
+                                <th>닉네임</th>
+                                <th>인증 방식</th>
+                                <th>결과 상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <div id="toast">알림 메시지</div>
@@ -537,6 +622,10 @@
         { id: 4, title: "크로노 퍼즐: 시간의 톱니", genre: "퍼즐 / 어드벤처", origPrice: 15000, price: 10500, discount: 30, icon: "⏳", bg: "#78350f", desc: "과거와 현재의 시간을 조작하여 고대 시계탑의 수수께끼를 풀어보세요." }
     ];
 
+    // localStorage 키
+    const STORAGE_USERS_KEY = 'pixel_realm_users';
+    const STORAGE_LOGS_KEY = 'pixel_realm_login_logs';
+
     // 상태 변수
     let cart = [
         { id: 1, qty: 1 },
@@ -547,6 +636,53 @@
     let idChecked = false;
     let nickChecked = false;
 
+    // 현재 시각 포맷
+    function getFormattedNow() {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+
+    // 회원 목록 불러오기 / 저장하기
+    function getUsers() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_USERS_KEY)) || [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveUsers(users) {
+        localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(users));
+    }
+
+    // 로그인 기록 불러오기 / 추가하기
+    function getLoginLogs() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_LOGS_KEY)) || [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function addLoginLog(userId, nickname, method, success) {
+        const logs = getLoginLogs();
+        logs.unshift({
+            time: getFormattedNow(),
+            userId: userId,
+            nickname: nickname || '-',
+            method: method,
+            success: success
+        });
+        localStorage.setItem(STORAGE_LOGS_KEY, JSON.stringify(logs));
+        updateLogBadge();
+    }
+
+    function updateLogBadge() {
+        const logs = getLoginLogs();
+        document.getElementById('log-badge').textContent = logs.length;
+    }
+
     // 탭 전환
     function switchTab(tabName) {
         document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
@@ -554,6 +690,7 @@
         document.getElementById('page-' + tabName).classList.add('active');
         document.getElementById('nav-' + tabName).classList.add('active');
         if (tabName === 'cart') renderCart();
+        if (tabName === 'logs') renderLogsPage();
     }
 
     // 알림 토스트
@@ -742,14 +879,31 @@
             return;
         }
         const total = document.getElementById('calc-final').textContent;
-        alert(`[Pixel Realm 결제 완료]\n최종 결제 금액: ${total}\n디지털 게임 활성화 키가 마이페이지 보관함으로 발급되었습니다!`);
+        alert(`[Pixel Realm 결제 완료]
+최종 결제 금액: ${total}
+디지털 게임 활성화 키가 마이페이지 보관함으로 발급되었습니다!`);
         cart = [];
         updateBadge();
         renderCart();
     }
 
-    // 회원가입 유효성 검증
+    // 회원가입 중복확인 초기화 및 검증
+    function resetIdCheck() {
+        idChecked = false;
+        const msg = document.getElementById('id-msg');
+        msg.textContent = '사용할 아이디 입력 후 중복확인을 눌러주세요.';
+        msg.className = 'helper-text';
+    }
+
+    function resetNickCheck() {
+        nickChecked = false;
+        const msg = document.getElementById('nick-msg');
+        msg.textContent = '';
+        msg.className = 'helper-text';
+    }
+
     function checkDuplicate(type) {
+        const users = getUsers();
         if (type === 'id') {
             const val = document.getElementById('reg-id').value.trim();
             const msg = document.getElementById('id-msg');
@@ -759,8 +913,9 @@
                 idChecked = false;
                 return;
             }
-            if (val === 'admin' || val === 'test') {
-                msg.textContent = '❌ 이미 사용 중인 아이디입니다.';
+            const exists = users.some(u => u.id === val) || val === 'admin' || val === 'test';
+            if (exists) {
+                msg.textContent = '❌ 이미 가입되었거나 사용 중인 아이디입니다.';
                 msg.className = 'helper-text error';
                 idChecked = false;
             } else {
@@ -777,9 +932,16 @@
                 nickChecked = false;
                 return;
             }
-            msg.textContent = `✅ '${val}' 닉네임을 사용할 수 있습니다.`;
-            msg.className = 'helper-text success';
-            nickChecked = true;
+            const exists = users.some(u => u.nick === val);
+            if (exists) {
+                msg.textContent = '❌ 이미 사용 중인 닉네임입니다.';
+                msg.className = 'helper-text error';
+                nickChecked = false;
+            } else {
+                msg.textContent = `✅ '${val}' 닉네임을 사용할 수 있습니다.`;
+                msg.className = 'helper-text success';
+                nickChecked = true;
+            }
         }
     }
 
@@ -805,37 +967,80 @@
         e.preventDefault();
         if (!idChecked) { showToast('아이디 중복확인을 진행해주세요.'); return; }
         if (!nickChecked) { showToast('닉네임 중복확인을 진행해주세요.'); return; }
+        const id = document.getElementById('reg-id').value.trim();
         const pw = document.getElementById('reg-pw').value;
         const pwc = document.getElementById('reg-pw-confirm').value;
+        if (pw.length < 4) { showToast('비밀번호는 4자 이상 입력해주세요.'); return; }
         if (pw !== pwc) { showToast('비밀번호 확인이 일치하지 않습니다.'); return; }
 
-        const nick = document.getElementById('reg-nick').value;
+        const nick = document.getElementById('reg-nick').value.trim();
         const genres = Array.from(document.querySelectorAll('.genre-item input:checked')).map(el => el.value);
+
+        const users = getUsers();
+        users.push({
+            id: id,
+            pw: pw,
+            nick: nick,
+            genres: genres.length ? genres.join(', ') : '미선택',
+            createdAt: getFormattedNow()
+        });
+        saveUsers(users);
         
-        alert(`🎉 회원가입을 환영합니다, ${nick}님!\n선택한 선호 장르: ${genres.join(', ') || '없음'}\n로그인 페이지로 이동합니다.`);
-        document.getElementById('login-id').value = document.getElementById('reg-id').value;
+        alert(`🎉 회원가입이 완료되었습니다, ${nick}님!
+등록된 계정으로 바로 로그인할 수 있습니다.`);
+        e.target.reset();
+        resetIdCheck();
+        resetNickCheck();
+        document.getElementById('pw-msg').textContent = '';
+        document.getElementById('login-id').value = id;
+        document.getElementById('login-pw').value = '';
+        document.getElementById('login-error-msg').textContent = '';
         switchTab('login');
     }
 
-    // 로그인 처리
+    // 로그인 처리 (가입 회원 검증 + 기록 저장)
     function handleLogin(e) {
         e.preventDefault();
-        const id = document.getElementById('login-id').value;
-        completeLogin(id);
+        const id = document.getElementById('login-id').value.trim();
+        const pw = document.getElementById('login-pw').value;
+        const errMsg = document.getElementById('login-error-msg');
+        const users = getUsers();
+
+        const matchedUser = users.find(u => u.id === id);
+        if (!matchedUser) {
+            errMsg.textContent = '❌ 등록되지 않은 아이디입니다. 먼저 회원가입을 진행해주세요.';
+            addLoginLog(id, '-', '일반 로그인', false);
+            showToast('등록되지 않은 아이디입니다.');
+            return;
+        }
+
+        if (matchedUser.pw !== pw) {
+            errMsg.textContent = '❌ 비밀번호가 일치하지 않습니다.';
+            addLoginLog(id, matchedUser.nick, '일반 로그인', false);
+            showToast('비밀번호가 일치하지 않습니다.');
+            return;
+        }
+
+        errMsg.textContent = '';
+        addLoginLog(matchedUser.id, matchedUser.nick, '일반 로그인', true);
+        completeLogin(`${matchedUser.nick} (${matchedUser.id})`);
     }
 
     function socialLogin(provider) {
-        completeLogin(`${provider}_게이머`);
+        const socialId = `${provider.toLowerCase()}_user`;
+        const socialNick = `${provider}_게이머`;
+        addLoginLog(socialId, socialNick, `${provider} 소셜 로그인`, true);
+        completeLogin(socialNick);
     }
 
-    function completeLogin(username) {
+    function completeLogin(displayName) {
         document.getElementById('nav-login').style.display = 'none';
         document.getElementById('nav-signup').style.display = 'none';
         const status = document.getElementById('user-status');
         status.style.display = 'flex';
-        document.getElementById('welcome-msg').textContent = `👾 ${username}님 접속중`;
-        showToast(`${username}님, Pixel Realm에 로그인되었습니다!`);
-        switchTab('shop');
+        document.getElementById('welcome-msg').textContent = `👾 ${displayName}님 접속중`;
+        showToast(`${displayName}님, 로그인되었습니다! (기록 저장 완료)`);
+        switchTab('logs');
     }
 
     function logout() {
@@ -845,9 +1050,62 @@
         showToast('로그아웃 되었습니다.');
     }
 
+    // 회원 및 로그인 기록 렌더링
+    function renderLogsPage() {
+        const users = getUsers();
+        const logs = getLoginLogs();
+
+        document.getElementById('user-count').textContent = users.length;
+        document.getElementById('log-count').textContent = logs.length;
+
+        const usersBody = document.getElementById('users-table-body');
+        if (users.length === 0) {
+            usersBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:24px;">아직 가입된 회원이 없습니다. 회원가입 탭에서 계정을 생성해보세요.</td></tr>`;
+        } else {
+            usersBody.innerHTML = users.map(u => `
+                <tr>
+                    <td><strong>${u.id}</strong></td>
+                    <td>${u.nick}</td>
+                    <td>${u.genres}</td>
+                    <td style="color:var(--text-muted);">${u.createdAt}</td>
+                </tr>
+            `).join('');
+        }
+
+        const logsBody = document.getElementById('logs-table-body');
+        if (logs.length === 0) {
+            logsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">로그인 기록이 없습니다. 로그인을 시도하면 이곳에 실시간으로 기록됩니다.</td></tr>`;
+        } else {
+            logsBody.innerHTML = logs.map((log, idx) => `
+                <tr>
+                    <td>${logs.length - idx}</td>
+                    <td style="color:var(--text-muted);">${log.time}</td>
+                    <td><strong>${log.userId}</strong></td>
+                    <td>${log.nickname}</td>
+                    <td>${log.method}</td>
+                    <td>
+                        <span class="status-pill ${log.success ? 'status-success' : 'status-fail'}">
+                            ${log.success ? '로그인 성공' : '로그인 실패'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function clearAllStorage() {
+        if (!confirm('저장된 회원 정보와 로그인 기록을 모두 초기화할까요?')) return;
+        localStorage.removeItem(STORAGE_USERS_KEY);
+        localStorage.removeItem(STORAGE_LOGS_KEY);
+        updateLogBadge();
+        renderLogsPage();
+        showToast('회원 및 로그인 기록이 초기화되었습니다.');
+    }
+
     // 초기 실행
     renderShop();
     renderCart();
+    updateLogBadge();
 </script>
 </body>
 </html>
